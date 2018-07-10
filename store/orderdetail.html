@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>订单详情</title>
+     <script src="https://cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+    <script src="js/font.js"></script>
+    <script src="js/getos.js"></script>
+    <script src="js/api.config.js"></script>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/mescroll.min.css"> 
+    <script src="js/mescroll.min.js"></script>
+    <style>
+        body,html{
+            height:100%;
+            width: 100%;
+            overflow-x:hidden; 
+        }
+        body{
+            background: #f5f5f5;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="orderdetail-nav">
+        <span class="nav-back" onclick="window.history.go(1)"></span>
+        <span class="nav-title">订单详情</span>
+    </nav>
+    <!-- <div class="orderdetail-wrapper">
+        <div class="orderdetail-head">
+            <div class="orderdetail-head-avater"></div>
+            <div class="orderdetail-head-name">才可</div>
+            <div class="orderdetail-head-tel">15958197006</div>
+        </div> 
+        <div class="orderdetail-info">
+            <div class="guest-info">
+                <span class="guest-name">zhangsan</span>
+                <span class="guest-time">03-08 7:00</span>
+            </div>
+            <div class="guest-tel">183****5252</div>
+            <div class="project-text">项目名</div>
+            <div class="project-name">杭州境宽地产融合平台</div>
+        </div>
+        <div class="orderdetail-record">
+            <div class="record-text">订单记录</div>
+            <div class="lineball-status">
+                <div class='report-ball on'></div>
+                <div class='report-line'></div>
+                <div class='boarding-ball'></div>
+                <div class='boarding-line'></div>
+                <div class='deal-ball'></div>
+            </div>
+            <div class="text-status">
+                <div class="report-text on">报备</div>
+                <div class="boarding-text">上客</div>
+                <div class="deal-text ">成交</div>
+            </div>
+            <div class="orderdetail-list-wrapper">
+                <div class="orderdetail-list">
+                    <div class="orderdetail-list-time">03-01</div>
+                        <div class="orderdetail-list-ball">
+                             <div class="list-ball"></div>
+                             <div class="list-line"></div>
+                        </div>
+                    <div class="orderdetail-list-status">发起成交</div>
+                </div>
+                <div class="orderdetail-list">
+                    <div class="orderdetail-list-time">03-01</div>
+                    <div class="orderdetail-list-ball">
+                        <div class="list-ball"></div>
+                        <div class="list-line"></div>
+                    </div>
+                    <div class="orderdetail-list-status">发起成交</div>
+                </div>
+                <div class="orderdetail-list first">
+                        <div class="orderdetail-list-time">03-01</div>
+                        <div class="orderdetail-list-ball">
+                            <div class="list-ball"></div>
+                            <div class="list-line"></div>
+                        </div>
+                        <div class="orderdetail-list-status">发起成交</div>
+                    </div>
+            </div>
+           
+        </div>
+        <div class="orderdetail-footer">
+            <p>预计上客时间：2018-03-01</p>
+            <p>出行人数：1</p>
+            <p>出行人数：1</p>
+            <p>出发城市：杭州</p>
+            <p>出发城市：杭州</p>
+        </div>
+    </div>  -->
+    <script>
+        $(function(){
+            var orderId=location.href.split('orderId=')[1];
+            $.ajax({
+                method:'GET',
+                url:URL.orderdetail,
+                data:{'uuid':uuid,'orderId':orderId},
+                success:(data)=>{
+                    console.dir(data);
+                    $('.orderdetail-nav').after(`
+                    
+                    <div class="orderdetail-wrapper">
+        <div class="orderdetail-head">
+            <div class="orderdetail-head-avater"><img src="${data.data.portrait}"/></div>
+            <div class="orderdetail-head-name">${data.data.realname}</div>
+            <div class="orderdetail-head-tel">${data.data.username}</div>
+        </div> 
+        <div class="orderdetail-info">
+            <div class="guest-info">
+                <span class="guest-name">${data.data.order.clientName}</span>
+                <span class="guest-time">${timeformat(parseInt(data.data.order.orderCreateTime),1)}</span>
+            </div>
+            <div class="guest-tel">${data.data.order.fullContacto}</div>
+            <div class="project-text">项目名</div>
+            <div class="project-name">${data.data.order.projectName}</div>
+        </div>
+        <div class="orderdetail-record">
+            <div class="record-text">订单记录</div>
+            <div class="lineball-status">
+                <div class='report-ball' ></div>
+                <div class='report-line'></div>
+                <div class='boarding-ball'></div>
+                <div class='boarding-line'></div>
+                <div class='deal-ball' ></div>
+            </div>
+            <div class="text-status">
+                <div class="report-text ">报备</div>
+                <div class="boarding-text">上客</div>
+                <div class="deal-text ">成交</div>
+            </div>
+            <div class="orderdetail-list-wrapper">
+            
+            </div>
+        </div>
+        <div class="orderdetail-footer">
+            <p>预计上客时间：${data.data.order.boardingPlanes}</p>
+            <p>出行人数: ${data.data.order.partPersonNum}</p>
+            <p>用餐人数：${data.data.order.lunchNum}</p>
+            <p>出发城市：${data.data.order.departureCity}</p>
+            <p>到访方式：${data.data.order.partWay=='1'?'驾车':(data.data.order.partWay=='2'?'班车':'其他')}</p>
+        </div>
+    </div>        
+                    `)
+
+                //dealStatus	交易状态 1.报备，2.上客，3.成交，4.失效
+                //verify	    审核状态 1.未申请，2.审核中,3.审核通过，4.退回
+                var dealStatus=data.data.order.dealStatus;
+                var verify=data.data.order.verify;
+                orderHeightLightBall(dealStatus,verify);
+                function orderHeightLightBall(dealStatus,verify){
+                    if(dealStatus=='1'){
+                        if(verify=='3'){
+                            $('.report-ball').addClass('on');
+                            $('.report-text').addClass('on')
+                        }
+                    }else if(dealStatus=='2'){
+                        $('.report-ball').addClass('on');
+                        $('.report-text').addClass('on')
+                        if(verify=='3'){
+                            $('.report-line').addClass('on');
+                            $('.boarding-ball').addClass('on')
+                            $('.boarding-text').addClass('on')
+                        }
+                    }else if(dealStatus=='3'){
+                        $('.report-ball').addClass('on');
+                        $('.report-line').addClass('on');
+                        $('.boarding-ball').addClass('on');
+                        $('.boarding-line').addClass('on');
+                        $('.report-text').addClass('on');
+                        $('.boarding-text').addClass('on')
+                        if(verify=='3'){
+                            $('.deal-ball').addClass('on'); 
+                            $('.deal-text').addClass('on')
+                        }
+                    }else{
+                        return;
+                    }
+                }
+                // list字段 添加
+                for( let i=0;i<data.data.list.length;i++){
+                    if(i>=(data.data.list.length-1)){
+                        $('.orderdetail-list-wrapper').append(`
+                    <div class="orderdetail-list first">
+                    <div class="orderdetail-list-time"> ${timeformat((new Date(data.data.list[i].time)).getTime(),2)} <br/>
+                        ${timeformat((new Date(data.data.list[i].time)).getTime(),3)}    
+                    </div>
+                    <div class="orderdetail-list-ball">
+                        <div class="list-ball"></div>
+                        <div class="list-line"></div>
+                    </div>
+                    <div class="orderdetail-list-status">${i==0?'报备成功':(i==1?'上客':(i==2?'发起成交':'失效'))}<br/>${data.data.list[i].examineLog}</div>
+                </div>
+                    `)
+                    }else{
+                        $('.orderdetail-list-wrapper').append(`
+                    <div class="orderdetail-list ">
+                    <div class="orderdetail-list-time"> ${timeformat((new Date(data.data.list[i].time)).getTime(),2)} <br/>
+                        ${timeformat((new Date(data.data.list[i].time)).getTime(),3)}    
+                    </div>
+                    <div class="orderdetail-list-ball">
+                        <div class="list-ball"></div>
+                        <div class="list-line"></div>
+                    </div>
+                    <div class="orderdetail-list-status">${i==0?'报备成功':(i==1?'上客':(i==2?'发起成交':'失效'))}<br/>${data.data.list[i].examineLog}</div>
+                </div>
+                    `)
+                    }
+                   
+                }
+
+                },
+                error:(data)=>{
+                    alert(data.msg);
+                }
+            })
+
+
+        })
+
+        //时间戳时间格式化
+        function timeformat(obj,type){//传入的obj是时间戳,type 1:月+日+时间 type:2 月+日,type:3 时间
+            var month=(new Date(obj)).getMonth()+1<10? ('0'+((new Date(obj)).getMonth()+1)) :((new Date(obj)).getMonth()+1);
+            var day=(new Date(obj)).getDate()<10 ? ('0'+(new Date(obj)).getDate()) :((new Date(obj)).getDate());
+            var hour=(new Date(obj)).getHours();
+            var minute=(new Date(obj)).getMinutes();
+            if(type==1){
+                return month+'-'+day +'&nbsp'+hour+':'+minute
+            }else if(type==2){
+                return month+'-'+day
+            }else{
+                return hour+':'+minute 
+            }
+            
+        }  
+    </script>
+</body>
+</html>

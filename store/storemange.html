@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>门店管理</title>
+    <script src="https://cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+    <script src="js/font.js"></script>
+    <script src="js/getos.js"></script>
+    <script src="js/api.config.js"></script>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        body,html{
+            height:100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        body{
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <span class="nav-back" onclick="back()"></span>
+        <span class="nav-title">门店管理</span>
+    </nav>
+    <div class="staff-manage" onclick="staffmanage()">
+        <span class="staff-manage-icon"></span>
+        <span class="staff-manage-text">员工管理</span>
+        <span class="staff-manage-arrow"></span>
+    </div>
+    <div class="order-manage"onclick="order()">
+        <span class="order-manage-icon"></span>
+        <span class="order-manage-text">订单管理</span>
+        <span class="order-manage-arrow"></span>
+    </div>
+    <div class="commission">
+        <span class="commission-icon"></span>
+        <span class="commission-text">佣金是否可见</span>
+        <span class="commission-switch " onclick="switchcheck(this,1)"></span>
+    </div>
+    <div class="tel">
+        <span class="tel-icon"></span>
+        <span class="tel-text">对接人电话是否可见</span>
+        <span class="tel-switch " onclick="switchcheck(this,2)"></span>
+    </div>
+
+
+    <script>
+         function back(){
+            if(getOS()=='ios'){
+                window.webkit.messageHandlers.black.postMessage('1');
+            }
+            if(getOS()=='android'){
+                jsBridge.back();
+            }
+        }
+        if(getOS()=='ios'){
+        //    ios
+            
+        } 
+        if(getOS()=='android'){
+        // android   
+      
+        }
+        $(document).ready(function(){
+            $.ajax({
+                type : "POST",
+                //contentType: "application/json;charset=utf-8",
+                url:URL.HouseMangeIndex,
+                data:{"uuid":uuid},
+                dataType:'json',
+                success:(response)=>{
+                    console.dir(response)
+                    if(response.code==200){
+                        var commissionFlag=response.data.commissionFlag;//是否不显示佣金0显示1不显示
+                        var invisibleLinkmanFlag=response.data.invisibleLinkmanFlag//	联系人是否可见（0可见1不可见）
+                        switch(commissionFlag){
+                            case '0':
+                            $('.commission-switch').addClass('on');
+                            break;
+                            case '1':
+                            $('.commission-switch').addClass('off');
+                        };
+                        switch(invisibleLinkmanFlag){
+                            case '0':
+                                $('.tel-switch').addClass('on');
+                                break;
+                            case '1':
+                                $('.tel-switch').addClass('off');
+                                break;
+                        }
+                    }
+                }
+            })
+        })
+        var  commissionvisible;
+        var telvisible;
+        var DATA;
+//开关切换
+        function switchcheck(obj,num){
+                if($(obj).hasClass('off')){
+                    $(obj).removeClass('off').addClass('on');
+                }else{
+                    $(obj).removeClass('on').addClass('off');
+                }
+                commission();
+                tel();
+                if(num==1){//佣金点击
+                    DATA={"uuid":uuid,"commissionFlag":commissionvisible}
+                }else{
+                    DATA={"uuid":uuid,"invisibleLinkmanFlag":telvisible}
+                }
+                $.ajax({
+                    method:'post',
+                    url:URL.setStoreInvisible,
+                    data:DATA,
+                    success:(response)=>{
+                        console.dir(response)
+                    }
+                })
+        } 
+//员工管理跳转
+        function staffmanage(){
+            location.href='staff.html?uuid='+uuid
+            
+        }
+//订单管理跳转
+        function order(){
+            location.href='order.html?uuid='+uuid
+        }        
+//佣金是否可见
+        function commission(){
+            if($('.commission-switch').hasClass('on')){//佣金可见
+                commissionvisible='0';
+            }else{
+                commissionvisible='1';
+            }
+        }    
+// 电话是否可见
+        function tel(){
+            if($('.tel-switch').hasClass('on')){//电话可见
+                telvisible='0';
+            }else{
+                telvisible='1';
+            }
+        }    
+    </script>
+</body>
+</html>

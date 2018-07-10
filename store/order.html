@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>订单管理</title>
+    <script src="https://cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+    <script src="js/font.js"></script>
+    <script src="js/getos.js"></script>
+    <script src="js/api.config.js"></script>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/mescroll.min.css"> 
+    <script src="js/mescroll.min.js"></script>
+    <style>
+        body,html{
+            height:100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        body{
+            background: #f5f5f5;
+        }
+        .hide{display: none;}
+        .mescroll{
+            position: fixed;
+            top:2.36rem;
+            bottom:0;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="order-nav">
+        <span class="nav-back" onclick="backstoremange()"></span>
+        <span class="nav-title">订单管理</span> 
+        <span class="order-search" onclick="gosearch()"></span>
+    </div>
+    <div class="order-tabs">
+        <div class="tab-item"><span class="on" i='0'>待上客</span></div>
+        <div class="tab-item"><span i='1'>待成交</span></div>
+        <div class="tab-item"><span i='2'>已完成</span></div>
+        <div class="tab-item"><span i='3'>已失效</span></div>
+    </div>
+    <div class="order-list-wrapper">
+        <div class="mescroll" id='mescroll0'>
+            <div class="dataList0" id="dataList0">
+               <!-- <div class="order-list-item">
+                    <div class="order-list-item-title">
+                        <span class="order-list-item-title-avater"></span>
+                        <span class="order-list-item-title-name">才可</span>
+                        <span class="order-list-item-title-tel">18325455252</span>
+                    </div>
+                    <div class="order-list-item-guest">
+                        <span class="order-list-item-guest-title">客户：</span> <span class="order-list-item-guest-info">李四183****5252</span>
+                    </div>
+                    <div class="order-list-item-house">
+                        <span class="order-list-item-house-title">楼盘：</span> <span class="order-list-item-house-info">铂金公馆</span>
+                    </div>
+                    <div class="order-list-item-info">
+                        <span class="order-list-item-info-time">03-08 7:40</span><span class="order-list-item-info-result">成交审核失败</span>
+                    </div>
+                </div>  -->
+            </div>
+        </div>
+        <div class="hide mescroll" id='mescroll1'>
+            <div class="dataList1" id="dataList1"></div>
+        </div>
+        <div class="hide mescroll" id='mescroll2'>
+            <div class="dataList2" id="dataList2"></div>
+        </div>
+        <div class="hide mescroll" id='mescroll3'>
+            <div class="dataList3" id="dataList3"></div>
+        </div>
+    </div>
+
+    <script>
+        $(function(){
+            var curNavIndex=0;//0待上客，1待成交，2已完成，3已失效
+            mescrollArr=new Array(4)//4个菜单对应4个mescroll对象
+            //初始化首页
+            mescrollArr[0]=initMescroll('mescroll0','dataList0');
+            $('.order-tabs').find('span').on('click',function(){
+                var i=Number($(this).attr('i'))
+                if(curNavIndex!=i){
+                    $('.order-tabs .on').removeClass('on');
+                    $(this).addClass('on');
+                    // 隐藏当前列表和回到顶部按钮
+                    $('#mescroll'+curNavIndex).hide();
+                    mescrollArr[curNavIndex].hideTopBtn();
+                    // 显示对应的列表
+                    $('#mescroll'+i).show();
+                    // 取出菜单的对应的mescroll对象，初始化
+                    if(mescrollArr[i]==null){
+                        mescrollArr[i]=initMescroll("mescroll"+i, "dataList"+i);
+                    }else{
+                        // 检查是否需要显示回到顶部按钮
+                        var curMescroll=mescrollArr[i];
+                        var curScrollTop=curMescroll.getScrollTop();
+                        if(curScrollTop>=curMescroll.optUp.toTop.offset){
+                            curMescroll.showTopBtn();
+                        }else{
+                            curMescroll.hideTopBtn();
+                        }
+                    }
+                    // 更新curNavIndex
+                    curNavIndex=i;
+                }
+            })
+            // 创建mescroll对象
+            function initMescroll(mescrollId,clearEmptyId){
+                //创建mescroll对象，默认开启下拉刷新，自动执行up.callback,刷新列表数据
+                var mescroll=new MeScroll(mescrollId,{
+                    up:{
+                        callback:getListData,//相当于callback:function(page){getListData(page)}
+                        isBounce:false,
+                        noMoreSize: 4,
+                        empty:{
+                            icon:'images/mescroll-empty.png',
+                            tip:'暂无相关数据'
+                        },
+                        clearEmptyId:clearEmptyId,
+                        toTop:{//配置回到顶部按钮
+                            src:'images/mescroll-totop.png'
+                        }
+                    }
+                });
+                return mescroll;
+            }
+            // 加载列表数据 page={num:1,size:10},num:当前页，size：每页的数据条数
+            function getListData(page){
+                // 加载数据
+                var dataIndex=curNavIndex;//记录下标，防止快速切换 curnavindex已经改变的情况
+                getListDataFormNet(dataIndex,page.num,page.size,function(pageData){
+                    //成功的回调，
+                    console.log("dataIndex="+dataIndex+", curNavIndex="+curNavIndex+", page.num="+page.num+", page.size="+page.size+", pageData.length="+pageData.length);
+                    mescrollArr[dataIndex].endSuccess(pageData.length);
+                    // 设置列表数据
+                    setListData(pageData,dataIndex)
+                },function(){
+                    //没有数据加载的回调，隐藏下拉刷新和上拉加载的状态
+                    mescrollArr[dataIndex].endErr();
+                })
+
+            }
+            function setListData(pageData,dataIndex){
+                // 添加数据
+                for( var i=0;i<pageData.length;i++){
+                    $('#dataList'+dataIndex).append(`
+                 
+               <div class="order-list-item" onclick="jumporderdetail('${pageData[i].orderId}')">
+                    <div class="order-list-item-title">
+                        <span class="order-list-item-title-avater"><img src="${pageData[i].portrait}"/></span>
+                        <span class="order-list-item-title-name">${pageData[i].realname}</span>
+                        <span class="order-list-item-title-tel">${pageData[i].username}</span>
+                    </div>
+                    <div class="order-list-item-guest">
+                        <span class="order-list-item-guest-title">客户：</span> <span class="order-list-item-guest-info">${pageData[i].clientName}  ${pageData[i].fullContacto}</span>
+                    </div>
+                    <div class="order-list-item-house">
+                        <span class="order-list-item-house-title">楼盘：</span> <span class="order-list-item-house-info">${pageData[i].projectName}</span>
+                    </div>
+                    <div class="order-list-item-house">
+                        <span class="order-list-item-house-title">公司：</span> <span class="order-list-item-house-info">${pageData[i].companyName}</span>
+                    </div>
+                    <div class="order-list-item-info">
+                        <span class="order-list-item-info-time">${pageData[i].reportDate}</span><span class="order-list-item-info-result">${pageData[i].statusContent}</span>
+                    </div>
+                </div> 
+    
+                    `)
+                }
+            };
+            // 拿数据
+            function getListDataFormNet(curNavIndex,pageNum,pageSize,successCallback,errorCallback){
+                $.ajax({
+                    method:'post',
+                    url:URL.queryStoreOrder,
+                    data:{'uuid':uuid,'current':pageNum,'size':pageSize,'type':(curNavIndex+1)},
+                    success:(data)=>{
+                        console.dir(data)
+                        var listData=[];
+                        //根据curnavIndex //0待上客，1待成交，2已完成，3已失效 的值动态改变
+                        if(curNavIndex==0){
+                            for(var j = (pageNum-1)*pageSize; j< pageNum*pageSize; j++){
+                                if(j==data.data.rows.length) break;
+                                listData.push(data.data.rows[j])
+                            }
+                        }else if(curNavIndex==1){
+                            for(var i=0;i<data.data.rows.length;i++){
+                                listData.push(data.data.rows[i])
+                            }
+                        }else if(curNavIndex==2){
+                            for(var i=0;i<data.data.rows.length;i++){
+                                listData.push(data.data.rows[i])
+                            }
+                        }else{
+                            for(var i=0;i<data.data.rows.length;i++){
+                                listData.push(data.data.rows[i])
+                            }
+                        }
+                        //回调
+                        successCallback(listData);
+                    },
+                    error:(data)=>{
+                        errorCallback;
+                    }
+                })
+            }
+            
+        })
+    // 跳转详情
+            function jumporderdetail(obj){
+                location.href='orderdetail.html?orderId='+obj
+            }
+            function backstoremange(){
+    //回到门店管理页
+            location.href='storemange.html?uuid='+uuid;
+        }
+    //去搜索页面
+    function gosearch(){
+        location.href='search.html?uuid='+uuid;
+    }    
+    </script>
+</body>
+</html>

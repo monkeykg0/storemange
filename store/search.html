@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>订单搜索</title>
+    <script src="https://cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+    <script src="js/font.js"></script>
+    <script src="js/getos.js"></script>
+    <script src="js/api.config.js"></script>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/mescroll.min.css"> 
+    <script src="js/mescroll.min.js"></script>
+    <script src="js/debunce.js"></script>
+    <style>
+        body,html{
+            height:100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        #mescroll{
+            position: fixed;
+            top:1.28rem;
+            bottom:0;
+
+        }
+    </style>
+</head>
+<body>
+    <nav class="search-bar">
+        <div class="search-bar-input">
+            <span class="search-icon"></span>    
+            <input type="text" placeholder="输入经纪人名、楼盘名" id="search">
+            <span class="search-delete"></span>
+        </div>
+        <span class="cancel">取消</span>
+    </nav>
+    <div class="mescroll order-list-wrapper" id='mescroll'>
+        <div class="dataList" id="dataList"></div>
+    </div>
+
+    <script>
+        $(function(){
+            var mescroll=new MeScroll('mescroll',{
+                down:{
+                    auto:false,
+                },
+                up:{
+                    callback:getListData,
+                    clearEmptyId:'dataList',
+                    isBounce: false,
+                    noMoreSize: 3,
+                    empty:{
+                        tip:'小的无能，找不到你想要的结果'
+                    }
+                },
+                toTop:{
+                    src:'images/mescroll-totop.png'
+                }
+            })
+            var curWord='';
+            // 输入框限制输入前后间隔500m后触发查询;
+            $('#search').donetyping(function(){
+                curWord=$('#search').val();
+                mescroll.resetUpScroll(); //重新搜索,重置列表数据
+                if($('#search').val()!=''){
+                    $('.search-delete').show();
+                }
+            });
+            // 加载列表数据
+            function getListData(page){
+                getListDataFromNet(curWord,page.num,page.size,function(curPageData){//成功的回调
+                    mescroll.endSuccess(curPageData.length);
+                    setListData(curPageData);
+                },function(){
+                    mescroll.endErr();
+                })
+            }
+            
+            function setListData(pageData){
+                for(var i=0;i<pageData.length;i++){
+                    $('#dataList').append(`
+                    
+                    <div class="order-list-item" onclick="jumporderdetail('${pageData[i].orderId}')">
+                    <div class="order-list-item-title">
+                        <span class="order-list-item-title-avater"><img src="${pageData[i].portrait}"/></span>
+                        <span class="order-list-item-title-name">${pageData[i].realname}</span>
+                        <span class="order-list-item-title-tel">${pageData[i].username}</span>
+                    </div>
+                    <div class="order-list-item-guest">
+                        <span class="order-list-item-guest-title">客户：</span> <span class="order-list-item-guest-info">${pageData[i].clientName}  ${pageData[i].fullContacto}</span>
+                    </div>
+                    <div class="order-list-item-house">
+                        <span class="order-list-item-house-title">楼盘：</span> <span class="order-list-item-house-info">${pageData[i].projectName}</span>
+                    </div>
+                    <div class="order-list-item-house">
+                        <span class="order-list-item-house-title">公司：</span> <span class="order-list-item-house-info">${pageData[i].companyName}</span>
+                    </div>
+                    <div class="order-list-item-info">
+                        <span class="order-list-item-info-time">${pageData[i].reportDate}</span><span class="order-list-item-info-result">${pageData[i].statusContent}</span>
+                    </div>
+                </div> 
+
+                    `)
+                }
+            }
+            //拿到后台数据
+            function getListDataFromNet(curWord, pageNum,pageSize,successCallback,errorCallback) {
+                $.ajax({
+                    method:'post',
+                    url:URL.queryStoreOrder,
+                    data:{'uuid':uuid,'current':pageNum,'size':pageSize,'keyword':curWord},
+                    success:(resposne)=>{
+                        console.dir(resposne)
+                        var listData=[];
+                        // var data=[];
+                        for( var i=0;i<resposne.data.rows.length;i++){
+                            listData.push(resposne.data.rows[i])
+                        }
+                        //回调
+                        successCallback(listData);
+                    },
+                    error:(data)=>{
+                        errorCallback;
+                    }
+                })
+            }
+
+        })
+        $('.search-delete').on('click tap',function(){
+            $('#search').val('')
+        })
+        function jumporderdetail(obj){
+                location.href='orderdetail.html?orderId='+obj
+            }
+            // 点击取消，回到订单列表页
+           $('.cancel').on('click tap',function(){
+            location.href='order.html?uuid='+uuid;
+           }) 
+    </script>
+</body>
+</html>
